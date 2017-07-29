@@ -1,0 +1,288 @@
+---
+title: "hw4"
+author: "Sam Mottahedi"
+date: "July 22, 2017"
+output: pdf_document
+---
+
+# Problem 1
+
+## a)
+
+```{r}
+d = read.table('CH19PR20.txt')
+y = d[,1] ;A = as.factor(d[,2]); B = as.factor(d[,3])
+
+df = data.frame(y=y, A=A, B=B)
+    
+    
+par(mfrow=c(2,2))
+fit <- lm(y ~ A + B + A * B)
+```
+
+
+```{r}
+plot(fit$fitted.values, fit$residuals)
+```
+
+The residuals variance  is not constant and increases as the prediction error increase. 
+
+
+## b)
+
+```{r}
+par(mfrow=c(1,2))
+hist(rstandard(fit))
+qqnorm(rstandard(fit))
+abline(a=0, b=1)
+```
+
+
+The residuals are slightly skewed to the left but it's not a major departure from normality of residuals.
+
+
+
+## c)
+
+```{r}
+anova(fit)
+```
+
+
+The test statistic $F=117.07 > = `r qf(0.99, 2, 2*3*(4-1))`$. the interaction term is significant.
+
+
+## d) 
+
+A:
+
+The test statistic $F=458.02 \ge `r qf(0.99, 1, 2*3*(4-1))`$. the main effect for factor A is significant.
+
+
+B:
+
+The test statistic $F=211.39 \ge `r qf(0.99, 2, 2*3*(4-1))`$. the main effect for factor B is significant.
+
+
+Testing is for main effect is not necessary since the test in part c showed that factor A and B interact with each other.
+
+## e)
+
+```{r}
+library(dplyr)
+df %>% group_by(A) %>% summarise(mu=mean(y)) -> means
+means
+```
+
+```{r}
+D_hat <- means$mu[1] - means$mu[2]
+s <- sqrt(2*86 / (2*4))
+q = sqrt(2) * D_hat / s
+q; D_hat
+qtukey(0.95, 2, 3*6)
+```
+
+
+
+```{r}
+# TukeyHSD(aov(y~ A*B, df), which = 'A', conf.level = 0.95)
+```
+
+
+$q^* = 24.73 >  2.97$  Rejecting the null ($H_0 : D=\mu_i - \mu_{i^{'}}=0$) the difference between the means of factor A is significant.
+
+# Problem 2
+
+## a)
+
+left :
+
+$y_{ij} = \mu_i + \epsilon_{ij}$
+
+right:
+
+$y_{ij} = \mu_{..} + \rho_i + \tau_j + \epsilon_{ij}$
+
+
+## b)
+
+In the image on the left, the treatments were randomly assigned with out considering the proximity to the wall or open walkway. In the image on the right, the each treatments are assigned in homogeneous groups and the treatment are assigned at random within each block.
+
+## c)
+
+left:
+
+source | SS | df | MS 
+-------|----|----|----
+BTW treatment | $SSTR = \sum n_i (\hat(Y_{i.}) - \hat{Y_{..}}$ | $r-1=3$ | SSTR/r-1
+error |  $SSE = \sum \sum (\hat(Y_{ij}) - \hat{Y_{i.}}$ | $n_T-r=20$ | SSE/ $n_T-r$
+total | SSTO | $n_T-1=23$ |
+
+
+right:
+
+
+source | SS | df | MS 
+-------|----|----|----
+Blocks | $SSBL = r \sum  (\hat(Y_{i.}) - \hat{Y_{..}}$ | $n_b-1=5$ | SSBL/$n_b-1$
+treatments | $SSTR = \sum n_b (\hat(Y_{.j}) - \hat{Y_{..}}$ | $r-1=3$ | SSTR/r-1
+error |  $SSBL.TR = \sum \sum e_{ij}^2$ | $(n_b-1)(r-1)=15$ | SSBL.TR / $(n_b-1)(r-1)$
+total | SSTO | $n_T-1$ |
+
+
+# Problem 3
+```{r}
+dat <- read.table('P1.txt', header = T, colClasses = c('numeric', 'factor', 'factor'))
+```
+
+## a)
+
+```{r}
+fit <- aov(score ~teacher + method, dat )
+summary(fit)
+```
+
+## b)
+
+$F^* = \frac{647.5}{6.2} = `r 647.5/6.2`$
+
+$H_0: \tau_1 = \tau_2 = \tau_3 = 0$
+
+$H_a: \textrm{not all} \tau_j \textrm{mequal zero}$
+
+$F^* > `r qf(0.95, 2, (10 -1) * (3 - 1))`$
+
+rejecting the null hypothesis, the mean performance is different for the three teaching methods.
+
+## c)
+
+```{r}
+dat %>% group_by(method) %>% summarise(mu=mean(score)) -> means
+means
+```
+
+
+$s^s = \frac{6.2 \times 2}{10}= `r (2*6.2)/10`$
+
+$q= `r qf(0.95, 3, 9*2)`$
+
+$T = `r (1/sqrt(2) * qf(0.95, 3, 9*2))`$
+
+$Ts\{ \hat{D} \} = `r sqrt((2*6.2)/10) * (1/sqrt(2) * qf(0.95, 3, 9*2))`$
+
+
+
+$`r (means$mu[2] - means$mu[1]) - sqrt((2*6.2)/10) * (1/sqrt(2) * qf(0.95, 3, 9*2))` \le \mu_2 - \mu_1 \le `r (means$mu[2] - means$mu[1]) + sqrt((2*6.2)/10) * (1/sqrt(2) * qf(0.95, 3, 9*2))`$
+
+
+$`r (means$mu[3] - means$mu[1]) - sqrt((2*6.2)/10) * (1/sqrt(2) * qf(0.95, 3, 9*2))` \le \mu_3 - \mu_1 \le `r (means$mu[3] - means$mu[1]) + sqrt((2*6.2)/10) * (1/sqrt(2) * qf(0.95, 3, 9*2))`$
+
+$`r (means$mu[3] - means$mu[2]) - sqrt((2*6.2)/10) * (1/sqrt(2) * qf(0.95, 3, 9*2))` \le \mu_3 - \mu_2 \le `r (means$mu[3] - means$mu[2]) + sqrt((2*6.2)/10) * (1/sqrt(2) * qf(0.95, 3, 9*2))`$
+
+
+we conclude that the method 3 has higher mean performance compared to method 2 and has a higher mean compared to method 1.
+
+
+# Problem 4
+
+```{r}
+
+data = read.table('softdrink.dat',header=T, colClasses = c('numeric', 'numeric', 'factor')) 
+```
+
+## a)
+
+```{r}
+library(ggplot2)
+
+g <- ggplot(data, aes(x=x, y=y, shape=type, color=type)) + 
+    geom_point(size=2, stroke=2) +
+    geom_smooth(se=FALSE, method='lm')
+print(g)
+```
+
+
+The slope for method 2 and 3 looks equal and the slope of method 1 is slightly different from the other two. Points related to method are general higher than method 3, and higher than method 1 in higher values of x.
+
+## b)
+
+```{r}
+df <- data
+df$x <- df$x - mean(df$x)
+fit1 <- lm(y ~ x + type, df)
+anova(fit1)
+
+par(mfrow=c(1,2))
+plot(fit1$fitted.values, fit1$residuals, col=df$type)
+abline(a=0, b=0)
+qqnorm(rstandard(fit1))
+abline(a = 0, b=1)
+```
+
+
+The two figures shows that there no major deviation from equal variance assumption and normality of residuals assumption.
+
+
+
+
+## c)
+
+```{r}
+fit2 <- lm(y ~ x, df)
+# anova(fit1, fit2)
+anova(fit1)
+anova(fit2)
+```
+
+$H_0: \tau_1 = \tau_2 = 0$
+
+$H_a: \textrm{not both} \tau_1 and \tau_2 \textrm{equal zero}$
+
+
+$F^* = `r ((53.59 - 41.95) / ((12 - 2) - (12 -  4))) / (41.95/ (12 - 4))`$
+
+$F^* < F = `r qf(0.95, 2, 8)`$
+
+we conclude $H_0$ that three truck methods do not differ in mean delivery time.
+
+
+
+
+## d)
+
+```{r}
+anova(lm(y ~ type, df))
+```
+
+$Y_{ij} = \mu_{.} + \tau_i + \epsilon_{ij}$
+
+$H_0: \gamma  = 0$
+
+
+$F^* = `r ((1259 - 41.95) / ((12 - 3) - (12 -  4))) / (41.95/ (12 - 4))`$
+
+$F^* > F = `r qf(0.95, 1, 8)`$
+
+rejecting $H_0$ the slope is significant.
+
+## e)
+
+$Y_{ij} = \mu_{.} + \tau_i + \gamma (X_{ij} - \bar{X}_{ij}) + \beta_1 I_{ij1} (X_{ij} - \bar{X}_{ij}) +   \beta_2 I_{ij2} (X_{ij} - \bar{X}_{ij}) +   \epsilon_{ij}$
+
+
+$H_0: \beta_1 = \beta_2 = 0$
+
+```{r}
+anova(lm(y ~ x + type + x:type ,df))
+```
+
+
+
+$F^* = `r ((41.95 - 32.42) / ((12 - (3+1)) - (6))) / (32.42/ (6))`$
+
+$F^* < F = `r qf(0.95, 2, 6)`$
+
+concluding null, that the tree treatment lines have the same slope.
+
+$P-value= `r 1 - pf(0.8818, 2, 6)`$
+

@@ -1,0 +1,226 @@
+---
+title: "HW2"
+author: "Sam Mottahedi"
+date: "July 8, 2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Problem 1 
+
+Source| SS | DF | MS | F | p-value
+------:|----|----|----|---|--------
+Between treatments| 64.42| 3| $`r 64.42/3`$ | 8.98| $`r 1 - pf(8.98, 3, 21-4)`$
+Within treatments|$`r 2.39 * (21-4)`$ |$`r 21-4`$ | 2.39 | |
+Total| $`r 64.42 +2.39 * (21-4)`$ | 20| | |
+
+
+
+
+# Problem 2
+
+```{r}
+y <- c(3129, 3000 ,2865 ,2890,3200, 3300 ,2975 ,
+       3150,2800 ,2900 ,2985 ,3050,2600 ,2700, 
+       2600, 2765) 
+x <- rep(1:4, times=1, each=4)
+
+fit <- aov(y ~  as.factor(x))
+summary(fit)
+```
+
+
+Source| SS | DF | MS | F | p-value
+------:|----|----|----|---|--------
+Between treatments| 489740| 3| 163247| 12.73|0.000489
+Within treatments|153908|12 | 12826 | |
+Total|$`r 153908 + 489740`$| 15| | |
+
+$p-value < 0.05$ The mean tensile strength for the four different mixing techniques are different.
+
+
+
+
+
+
+
+
+
+# Problem 3
+
+
+## a)
+
+```{r, echo=FALSE }
+library(psych)
+df <- read.table('./CH16PR08.txt')[, 1:2]
+df$V2 <- as.factor(df$V2)
+# fit <- lm(V1 ~ -1 + V2, df)
+# summary(fit)
+```
+
+```{r}
+tapply(df$V1, df$V2, mean)
+tapply(df$V1, df$V2, var)
+var(df$V1)
+describeBy(df$V1, df$V2)
+```
+
+## b)
+
+
+$se_{blue} = 1.63$
+
+$se_{green} = 1.47$
+
+$se_{orange} = 1$
+
+
+## c)
+
+```{r}
+summary( aov(V1 ~ V2, df))
+```
+
+$p-value = 0.684 > 0.05$
+
+We can't rejecting the null ($H_0: \mu_1 = \dots  = \mu_4$). The mean differences are not significant.
+
+
+## d)
+
+```{r}
+c1 <- c(1, 0, -1)
+c2 <- c(0, 1, -2)
+mat <- cbind(c1, c2)
+contrasts(df$V2) <- mat
+
+fit <- aov(V1 ~ V2, df)
+summary.aov(fit, split=list(V2=list('orange vs blue'=1, 'orange vs green'=2)))
+```
+
+
+since both p-values for "orange vs. blue" and "orange vs green" are greater than $0.05$ we can't reject the null hypothesis $H_0:\mu_{orange} = \mu_{green}$ and $H_0:\mu_{orange} = \mu_{blue}$.
+
+
+
+
+# Problem 4
+
+## a)
+
+
+
+Source| SS | DF | MS | F | p-value
+------:|----|----|----|---|--------
+Drug|56.10| 3| $`r 56.10/3`$ |$`r (56.10/3)/(62.12/24)`$ | $`r 1 - pf((56.10/3)/(62.12/24), 3, 24)`$
+Error|62.12|24 | $`r 62.12/24`$ | |
+Total|$`r 153908 + 489740`$| 27| | |
+
+
+$`r (56.10/3)/(62.12/24)`$ | $`r 1 - pf((56.10/3)/(62.12/24), 3, 24)` < 0.05$
+
+rejecting the null hypothesis $H_0:\mu_1 = \dots = \mu_4$, there is significant difference between bio-activity levels of the four drugs.
+
+
+## b) 
+
+Six.
+
+
+## c)
+
+```{r}
+qt(1-0.05/2, 28-4)
+```
+
+## d)
+
+
+Tukey:
+
+```{r}
+qtukey(0.95, 4, 24)/sqrt(2)
+```
+
+benferroni:
+
+```{r}
+qt(1-0.95/(2*6), 24)
+```
+
+scheffe:
+
+```{r}
+S2 = (4-1) * qf(0.05, 4-1, 28-4)
+sqrt(S2)
+```
+
+
+## e)
+
+```{r}
+u1 = 66.1; u2 = 65.75; u3= 62.63; u4 = 63.85
+
+l1 = u1 - u2; l2= u1 - u3
+l3 = u1 - u4; l4 = u2- u3
+l5= u2-u4; l6=u4-u3
+
+mse = 2.5883333
+
+
+s2 = mse*(1/7 + 1/7)
+```
+
+
+
+
+tukey: 2.758609 
+
+```{r}
+for (l in c(l1, l2, l3, l4, l5, l6)){
+    
+    print(2 * l / sqrt(s2))
+    
+}
+    
+```
+
+significant pairs:
+
+all except $\mu_1 - \mu_2$
+
+Scheffe: 0.5893068 
+
+```{r}
+for (l in c(l1, l2, l3, l4, l5, l6)){
+    
+    print(l^2 / (3 * s2))
+    
+}
+```
+
+
+all except $\mu_1 - \mu_2$
+
+Bonferroni: 1.456063 
+
+```{r}
+for (l in c(l1, l2, l3, l4, l5, l6)){
+    
+    print(l / sqrt(s2))
+    
+}
+```
+
+
+all except $\mu_1 - \mu_2, \mu_4 - \mu_3$
+
+
+## f) 
+
+The benferroni is more conservative compared to other two.
+Scheffe is usually used when the sample size are different.
+since the sample sizes are equal the tukey method is more appropriate for this situations.

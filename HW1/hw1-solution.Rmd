@@ -1,0 +1,208 @@
+---
+title: "HW1"
+author: "Sam Mottahedi"
+date: "July 1, 2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+setwd('~/Projects/STAT502/HW1/')
+set.seed(1234)
+require(ggplot2)
+require(stargazer)
+require(nlme)
+```
+
+
+(adapted from KNNL 16.8) The data in “paper.txt” are from an experiment investigating the effect of paper color on response rates for a questionnaire. 
+
+
+(a) Create a box plot of the data separating the results by color. Does it appear there are differences in the response rates?  Yes.
+
+```{r}
+df <- read.table('./data/paper.txt', header = F)
+df <- df[, c(1,2)]
+df$V2 <- as.factor(df$V2)
+p <- ggplot(df, aes(x= (V2), y=V1)) + geom_boxplot()
+
+print(p)
+```
+
+(b) Calculate the mean and standard deviation of the response rate for each of the three colors. Also calculate the pooled sample standard deviation. 
+
+```{r}
+df.mean <- tapply(df$V1,df$V2,mean) 
+df.sd <- tapply(df$V1,df$V2,sd) 
+df.var <- tapply(df$V1,df$V2,var) 
+
+pooled.sd <- sqrt(sum(4 * tapply(df$V1,df$V2, var)) / (15 - 3))
+pooled.sd
+```
+
+
+
+(c) Denoting the population means of the blue and green groups by 1 and 2, respectively, carry out the test of $H_0 : \mu_1 - \mu_2 = 0$ versus the two-sided alternative. Report the degrees of freedom, test statistic, and conclusion with $\alpha = 0.05$. 
+
+```{r, echo=T}
+pooled.sd <- sqrt(sum((5-1) * df.var[1:2]) / (5 + 5 - 2))
+t.value <- (df.mean[1] - df.mean[2])/ (pooled.sd * sqrt(1/5 + 1/5))
+qt(0.025, 8)
+
+
+```
+
+$df = 8$
+
+$t-value = -0.0911$
+
+$p-value = 2 \times pt(0.0911) = `r 2* pt(-0.0911, 8)$
+
+whe can't reject the null hypothesis. 
+
+(d) Estimate 1 2 with 95% confidence. 
+
+
+```{r, eval=T}
+df.mean[1] - df.mean[2] - abs(qt(0.025, 8)) * pooled.sd * sqrt(1/5 + 1/5)
+df.mean[1] - df.mean[2] + abs(qt(0.025, 8)) * pooled.sd * sqrt(1/5 + 1/5)
+```
+$lb =  -5.262716$  
+
+
+$ub = 4.862716$
+
+(e) What assumptions are you making for parts (c) and (d)? 
+
+
+Two the samples have approximately the same variance.
+
+
+
+# Problem 2
+
+```{r}
+data=read.table("./data/CH01PR19.txt")
+y=data[,1]
+x=data[,2]
+fit=lm(y~x) 
+summary(fit) 
+```
+## a)
+
+$y = 2.11405 + 0.03883 \times x$
+
+
+## b)
+
+The estimated standard deviation of the coefficient. 
+
+## c)
+
+$\beta_{lb} = \beta  - t_{\alpha /2,n-2} \times Std. Error = `r 0.03883 - qt(0.95, 118) *  0.01277`$
+
+$\beta_{up} = \beta + t_{\alpha /2,n-2} \times Std. Error = `r 0.03883 + qt(0.95, 118) *  0.01277`$
+
+
+## d)
+
+$y = 2.11405 + 0.03883 \times x = `r 2.11405 + 0.03883 * 30`$
+
+
+## e)
+
+```{r}
+plot(x, y, xlab='ACT', ylab='GPA')
+abline(fit)
+```
+
+
+# Problem 3 
+
+
+## a)
+
+```{r, echo=TRUE}
+df1 <- data[data$V2 <= 25,]
+df2 <- data[data$V2 > 25,]
+fit1 <- lm(V1 ~ V2, data=df1)
+fit2 <- lm(V1 ~ V2, data=df2)
+```
+
+$mean(GPA_low) = `r mean(df1$V1)`$
+
+$mean(GPA_high) = `r mean(df2$V1)`$
+
+$mean difference = `r mean(df2$V1) - mean(df1$V1)`$
+
+
+## b)
+
+
+```{r}
+x1 = 1 * (x>25)
+```
+
+The $x > 25$ returs True and False. When multiplied by 1 the returned value is 0 and 1.
+
+## c)
+
+```{r, echo=FALSE}
+fit3 <- (lm(y ~ x1))
+summary(fit3)
+```
+
+$difference expected GPA = 2.94951$
+
+$Std error = 0.07845$
+
+$df = 120 -2 = 118$
+
+
+## d)
+
+$t = \frac{\beta}{Std. Error} = `r 0.27173/ 0.11588`$
+
+$t^* = `r abs(qt(0.025, 118))`  < 2.345$
+
+$P-value = `r 2 * (1- pt(2.345, 118))`$
+
+
+## e)
+
+Yes.
+
+```{r}
+low=y[x<=25];high=y[x>25] 
+
+```
+
+Returns the value of y if the conidtion in bracket is true. 
+
+
+## f)
+
+
+$mean_{high} = `r mean(high)`$
+
+$mean_{low} = `r mean(low)`$
+
+
+$differece_{mean} = `r mean(high) -mean(low)`$
+
+
+$df = 118$ is equal to df in part c.
+
+## g)
+
+Yes, because both d, and g tests the difference in mean in two groups.
+
+```{r}
+t.test(low, high, var.equal = T)
+```
+
+
+
+
+
