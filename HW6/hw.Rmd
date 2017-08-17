@@ -7,11 +7,19 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+setwd('~/Projects/STAT502/HW6/')
 ```
 
 # Problem 1)
 ```{r}
 data <- read.table('pearls.txt', header=T, colClasses = c('numeric', 'factor','factor','factor'))
+
+mu <- mean(data$value)
+mu_i <- tapply(data$value, data$no_coats, mean)
+mu_j <- tapply(data$value, data$batch, mean)
+
+tau_b <- mu - mu_j
+tau_a <- mu - mu_i
 ```
 
 
@@ -31,19 +39,27 @@ the terms $\alpha_i, (\alpha \beta)_{ij}, \epsilon_{ijk}$ are random and $\mu_{.
 |MSAB| $(a-1)(b-1)=6$| $\sigma^2 + n \sigma_{\alpha \beta}^2$|
 |MSE| $ab(n-1)=36$| $\sigma^2$| 
 
+$\sigma^2 = 4.832$
+
+$\sigma_{\alpha \beta}^2 = `r (0.309 - 4.823)/4`$
+
+$\sigma_{\beta} = `r (50.951-4.823)/(3* 4)`$
+
+$E\{MSAB\} = `r 4.823 + 4*(0)`$
+
+$E\{MSB\} = `r 4.823 + 3* 4* 3.844`$
+
+$E\{MSA\} = `r 4.823 + 4 * 0 + (3*4/2) * sum(tau_b^2)`$
+
 
 ## (c)
 
-
-```{r}
-library(lme4)
-fit <- lmer(value ~ no_coats + (1|batch), data=data)
-summary(fit)
-```
 ```{r}
 fit2 <- lm(value ~ no_coats + batch + no_coats:batch, data)
 anova(fit2)
 ```
+
+
 
 $H_0: \sigma^2_{\alpha \beta} = 0$
 
@@ -77,6 +93,17 @@ $F^* > F$ concluding $H_a$ the effect of coat factor is significant.
 |MSAB| $(a-1)(b-1)=6$| $\sigma^2 + n \sigma_{\alpha \beta}^2$|
 |MSE| $ab(n-1)=36$| $\sigma^2$| 
 
+$\sigma^2 = 4.832$
+
+$\sigma_{\alpha \beta}^2 = `r (0.309 - 4.823)/4`$
+
+$\sigma_{\alpha} = `r (75.194-4.823)/(4* 4)`$
+
+$E\{MSAB\} = `r 4.823 + 4*(0)`$
+
+$E\{MSA\} = `r 4.823 + 4* 4* 4.3981875 `$
+
+$E\{MSB\} = `r 4.823 + 4 * 0 + (4*4/3) * sum(tau_b^2)`$
 
 
 ## f)
@@ -194,7 +221,29 @@ $\beta_k$ : Time factor, fixed
 
 ## c)
 
-That they have constant covariance.
+That the covariance for the same plot has compound symmetry and all covariances should be similar in magnitude. Yes.
+
 ## d)
 
+Yes, except for the two extreme points in left and right the rest of the points seems to be normal.
+
+
+```{r}
+fit <- lm(y ~ trt/plot + trt + time + trt:time)
+anova(fit)
+hist(fit$residuals, 20)
+qqnorm(fit$residuals)
+```
+
+
 ## e)
+
+$H_0: all \alpha_j = 0$
+$H_a: \textrm{not all} \alpha_j \textrm{equal zero}$
+
+$F^* = \frac{MSA}{MSS(A)} = `r 9964/222.8`$
+
+$F = `r qf(0.95, 1, 2*(9-1))`$
+
+$F^* > F$ we conclude $H_a$. That treatment effect exist and burned areas are significantly different.
+
